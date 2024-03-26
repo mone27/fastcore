@@ -12,6 +12,7 @@ from contextlib import contextmanager
 from copy import copy
 from configparser import ConfigParser
 import random,pickle,inspect
+from typing import Generic, TypeVar
 
 # %% ../nbs/02_foundation.ipynb 5
 @contextmanager
@@ -98,7 +99,10 @@ class _L_Meta(type):
         return super().__call__(x, *args, **kwargs)
 
 # %% ../nbs/02_foundation.ipynb 46
-class L(GetAttr, CollBase, metaclass=_L_Meta):
+T = TypeVar('T')
+
+# %% ../nbs/02_foundation.ipynb 47
+class L(GetAttr, CollBase, Generic[T], metaclass=_L_Meta):
     "Behaves like a list of `items` but can also index with list of indices or masks"
     _default='items'
     def __init__(self, items=None, *rest, use_list=False, match=None):
@@ -193,7 +197,7 @@ class L(GetAttr, CollBase, metaclass=_L_Meta):
     def product(self): return self.reduce(operator.mul, 1)
     def setattrs(self, attr, val): [setattr(o,attr,val) for o in self]
 
-# %% ../nbs/02_foundation.ipynb 47
+# %% ../nbs/02_foundation.ipynb 48
 add_docs(L,
          __getitem__="Retrieve `idx` (can be list of indices, or mask, or int) items",
          range="Class Method: Same as `range`, but returns `L`. Can pass collection for `a`, to use `len(a)`",
@@ -226,29 +230,29 @@ add_docs(L,
          setattrs="Call `setattr` on all items"
         )
 
-# %% ../nbs/02_foundation.ipynb 48
+# %% ../nbs/02_foundation.ipynb 49
 # Here we are fixing the signature of L. What happens is that the __call__ method on the MetaClass of L shadows the __init__
 # giving the wrong signature (https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init).
 def _f(items=None, *rest, use_list=False, match=None): ...
 L.__signature__ = inspect.signature(_f)
 
-# %% ../nbs/02_foundation.ipynb 49
+# %% ../nbs/02_foundation.ipynb 50
 Sequence.register(L);
 
-# %% ../nbs/02_foundation.ipynb 129
+# %% ../nbs/02_foundation.ipynb 132
 def save_config_file(file, d, **kwargs):
     "Write settings dict to a new config file, or overwrite the existing one."
     config = ConfigParser(**kwargs)
     config['DEFAULT'] = d
     config.write(open(file, 'w'))
 
-# %% ../nbs/02_foundation.ipynb 130
+# %% ../nbs/02_foundation.ipynb 133
 def read_config_file(file, **kwargs):
     config = ConfigParser(**kwargs)
     config.read(file, encoding='utf8')
     return config['DEFAULT']
 
-# %% ../nbs/02_foundation.ipynb 133
+# %% ../nbs/02_foundation.ipynb 136
 class Config:
     "Reading and writing `ConfigParser` ini files"
     def __init__(self, cfg_path, cfg_name, create=None, save=True, extra_files=None, types=None):
